@@ -57,6 +57,38 @@ describe Materielize::ConfigSetup do
     end
   end
 
+  context "copying default tree" do
+    context "and files exist" do
+      it "handles creating directories that don't exist" do
+        pending "Write me."
+      end
+
+      it "handles creating directories that do exist" do
+        pending "Write me."
+      end
+
+      it "copies files that don't exist already" do
+        pending "Write me."
+      end
+
+      it "doesn't overwrite existing files by default" do
+        pending "Write me."
+      end
+
+      it "overwrites existing files if the user indicates yes" do
+        pending "Write me."
+      end
+
+      it "does not overwrite existing files if the user indicates no" do
+        pending "Write me."
+      end
+
+      it "overwrites all existing files if the user indicates all" do
+        pending "Write me."
+      end
+    end
+  end
+
   def create_subdirectory(subdirectory_name)
     subdir_path = "#@default_config_files_path/#{subdirectory_name}"
     create_def_cfg_files_dir
