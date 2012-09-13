@@ -21,6 +21,11 @@ module Materielize
     def install
       Dir.mkdir(root_dir) if !materiel_exists?
       Dir.mkdir(sub_path(default_config_dir)) if !default_config_dir_exists?
+
+      readme = File.open("#@root_dir/README.TXT", "w")
+      readme << File.read(File.expand_path("lib/root.txt"))
+      readme.flush
+      readme.close
     end
 
     def init_cfg_files

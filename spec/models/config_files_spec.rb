@@ -15,6 +15,11 @@ describe Materielize::ConfigSetup do
     remove_materiel_dir
   end
 
+  after(:all) do
+    # just like a good neighbor...
+    remove_materiel_dir
+  end
+
   context "installation" do
     it "creates basic directories if they don't exist" do
       @setup.install
@@ -29,6 +34,7 @@ describe Materielize::ConfigSetup do
 
       @setup.materiel_exists?.should be true
       @setup.default_config_dir_exists?.should be true
+      File.exist?(File.expand_path("README.txt", @setup.root_dir)).should be true
     end
   end
 
