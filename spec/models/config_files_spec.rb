@@ -1,7 +1,10 @@
+#noinspection RubyResolve
 require "spec_helper"
 
-describe Materielize::ConfigFiles do
+describe Materielize::ConfigSetup do
   before(:all) do
+    @setup = Materielize::ConfigSetup.new
+
     @materiel_dir = "materiel"
     @default_config_files_dir = "default_config_files"
     @default_config_files_path = "#@materiel_dir/#@default_config_files_dir"
@@ -12,34 +15,39 @@ describe Materielize::ConfigFiles do
     remove_materiel_dir
   end
 
-  it "recognizes correctly if the materiel directory exists" do
-    create_materiel_dir
-    Materielize::ConfigFiles.materiel_exists?.should be true
+  context "installation" do
+    it "creates basic directories if they don't exist" do
+      @setup.install
+
+      @setup.materiel_exists?.should be true
+      @setup.default_config_dir_exists?.should be true
+    end
+
+    it "handles installation if directories do exist" do
+      create_def_cfg_files_dir
+      @setup.install
+
+      @setup.materiel_exists?.should be true
+      @setup.default_config_dir_exists?.should be true
+    end
   end
 
-  it "recognizes correctly if the materiel directory does not exist" do
-    Materielize::ConfigFiles.materiel_exists?.should be false
-  end
+  context "micro-ish helpers" do
+    it "recognizes correctly if the materiel directory exists" do
+      create_materiel_dir
+      @setup.materiel_exists?.should be true
+    end
 
-  context "default config files directory of materiel" do
+    it "recognizes correctly if the materiel directory does not exist" do
+      @setup.materiel_exists?.should be false
+    end
     it "recognizes if the default config files directory doesn't exist" do
-      Materielize::ConfigFiles.default_config_dir_exists?.should be false
+      @setup.default_config_dir_exists?.should be false
     end
 
     it "recognizes if the default config files directory does exist" do
       create_def_cfg_files_dir
-      Materielize::ConfigFiles.default_config_dir_exists?.should be true
-    end
-
-    it "creates mirrored subdirectory if it doesn't exist" do
-      dir_name = "materieled_config_dir"
-      create_subdirectory(dir_name)
-
-      Materielize::ConfigFiles.materiel_exists?.should be true
-    end
-
-    it "doesn't have a problem if the subdirectory does exist" do
-      pending "Write me"
+      @setup.default_config_dir_exists?.should be true
     end
   end
 
@@ -55,8 +63,8 @@ describe Materielize::ConfigFiles do
   def create_def_cfg_files_dir
     create_materiel_dir
 
-    if !Dir.exists?(@default_config_files_dir)
-      Dir.mkdir(@default_config_files_dir)
+    if !Dir.exists?(@default_config_files_path)
+      Dir.mkdir(@default_config_files_path)
     end
   end
 

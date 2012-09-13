@@ -1,39 +1,46 @@
 require "materielize/version"
 
 module Materielize
-  class ConfigFiles
-    class << self
-      def root_dir
-        "materiel"
-      end
+  class ConfigSetup
+    attr_reader :root_dir, :default_config_dir
 
-      def default_config_directory
-        "default_config_files"
-      end
-
-      def materiel_exists?
-        Dir.exists?(root_dir)
-      end
-
-      def default_config_dir_exists?
-        Dir.exists?(File.join(root_dir, default_config_directory))
-      end
-
-      def init_cfg_files
-        @rails_root = File.expand_path(".")
-        @template_dir = File.expand_path("materiel/default_config_files")
-
-        puts
-        puts "Copying default configuration files..."
-        copy @template_dir
-        puts
-        puts "Config files copied.  Edit things as you see fit. All original files can be found in 'materiel/default_config_files'"
-        puts
-      end
+    def initialize
+      @root_dir = "materiel"
+      @default_config_dir = "default_config_files"
     end
 
+    def materiel_exists?
+      Dir.exists?(root_dir)
+    end
+
+    def default_config_dir_exists?
+      Dir.exists?(sub_path(default_config_dir))
+    end
+
+    # Basic setup of materiel.  Create materiel directory, default config subdirectory, throw around some READMEs, etc.
+    def install
+      Dir.mkdir(root_dir) if !materiel_exists?
+      Dir.mkdir(sub_path(default_config_dir)) if !default_config_dir_exists?
+    end
+
+    def init_cfg_files
+      #@rails_root = File.expand_path(".")
+      #@template_dir = File.expand_path("materiel/default_config_files")
+      #
+      #puts
+      #puts "Copying default configuration files..."
+      #copy @template_dir
+      #puts
+      #puts "Config files copied.  Edit things as you see fit. All original files can be found in 'materiel/default_config_files'"
+      #puts
+    end
 
     private
+
+    # Create path relative to 'materiel'
+    def sub_path(name)
+      File.expand_path(name, root_dir)
+    end
 
     # ====================================================================================================================================================================
     # = Recursive call that winds through the materiel directory and copies default files.  Starting at materiel/default_config_files, the dir structure mimics the app  =
