@@ -2,10 +2,21 @@ require "materielize/version"
 
 module Materielize
   class ConfigFiles
-
     class << self
+      def root_dir
+        "materiel"
+      end
+
+      def default_config_directory
+        "default_config_files"
+      end
+
       def materiel_exists?
-        Dir.exists?("materiel")
+        Dir.exists?(root_dir)
+      end
+
+      def default_config_dir_exists?
+        Dir.exists?(File.join(root_dir, default_config_directory))
       end
 
       def init_cfg_files
