@@ -70,7 +70,7 @@ describe Materielize::ConfigSetup do
       end
     end
 
-    context "and files exist" do
+    context "creating reflection of default config directory" do
       it "handles creating directories that don't exist" do
         dir_name = "sub1"
         @paths_to_nuke << dir_name
@@ -112,7 +112,26 @@ describe Materielize::ConfigSetup do
       end
 
       it "handles creating directories that do exist" do
-        pending "Write me."
+        sub1 = "sub1"
+        sub2 = "sub1/sub2"
+        sub3 = "sub1/sub2/sub3"
+        @paths_to_nuke << sub1
+
+        Dir.mkdir(sub1)
+        Dir.mkdir(sub2)
+        Dir.mkdir(sub3)
+
+        @setup.init_cfg_files do |item|
+          puts item[:message]
+
+          if item[:needs_confirmation]
+            item[:confirmation] = true
+          end
+        end
+
+        Dir.exist?(sub1).should be true
+        Dir.exist?(sub2).should be true
+        Dir.exist?(sub3).should be true
       end
 
       it "copies files that don't exist already" do
