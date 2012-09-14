@@ -32,7 +32,7 @@ module Materielize
       @project_root = Dir.getwd
       @root = File.expand_path(default_config_dir, root_dir)
 
-      copy(@root) do |item|
+      copy([root_dir, default_config_dir]) do |item|
         yield(item)
       end
     end
@@ -44,54 +44,28 @@ module Materielize
       File.expand_path(name, root_dir)
     end
 
-    # ====================================================================================================================================================================
-    # = Recursive call that winds through the materiel directory and copies default files.  Starting at materiel/default_config_files, the dir structure mimics the app  =
-    # ====================================================================================================================================================================
+    def copy(path_parts, &block)
+      current_path = File.expand_path(File.join(*path_parts))
 
-    def copy(dir, &block)
-      old_dir = Dir.getwd
-
-      Dir.chdir(dir)
-      cwd = Dir.getwd
-
-      target_dir = @root + cwd.gsub(default_config_dir, "")
-
-      for entry in Dir.entries(".") do
+      for entry in Dir.entries(File.expand_path(current_path, ".")) do
         next if entry == "." || entry == ".."
 
-        if File.directory?(entry)
-          if !Dir.exist?(entry)
-            report_back(block, :message => "Creating directory #{entry}.")
-            Dir.mkdir("#@project_root/#{entry}")
-          end
-          copy(entry, &block)
-        else
-          target_file = "#{target_dir}/#{entry}"
+        # new_dir can also be a file, but naming it optimistically
+        new_dir = File.expand_path(entry, current_path)
 
-          if File.exists?(target_file)
-            options = report_back(block, :message => "#{target_file} exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel: ", :needs_confirmation => true, :confirmation => false)
-
-            if options[:confirmation]
-              report_back(block, :message => "Removing #{target_file}")
-              FileUtils.rm(target_file)
-            end
+        if File.directory?(new_dir)
+          # Figure path of an unknown depth of directories and subdirectories, slice off the materiel directory
+          # and create the currently found directory under its matching sibling under the project root
+          to_create = File.join(@project_root, *path_parts.reject{|part| [root_dir, default_config_dir].include?(part)}, entry)
+          if !Dir.exist?(to_create)
+            report_back(block, :message => "Creating directory #{to_create}.")
+            Dir.mkdir(to_create)
           end
 
-          if !File.exists?(target_file)
-            report_back(block, :message => "Creating #{entry}...")
-
-            begin
-              File.copy("#{cwd}/#{entry}", target_file)
-            rescue => e
-              report_back(block, :message => "Error copying file: #{e}")
-            end
-          else
-            report_back(block, :message => "#{entry} exists, skipping...")
-          end
+          # Inter-dimensional travel time...
+          copy(path_parts + [entry], &block)
         end
       end
-
-      Dir.chdir(old_dir)
     end
 
     def report_back(block, options)

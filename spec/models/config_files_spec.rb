@@ -88,6 +88,29 @@ describe Materielize::ConfigSetup do
         Dir.exist?(dir_name).should be true
       end
 
+      it "handles creating directories that don't exist, including many nested subdirectories" do
+        sub1 = "sub1"
+        sub2 = "sub1/sub2"
+        sub3 = "sub1/sub2/sub3"
+        @paths_to_nuke << sub1
+
+        create_subdirectory(sub1)
+        create_subdirectory(sub2)
+        create_subdirectory(sub3)
+
+        @setup.init_cfg_files do |item|
+          puts item[:message]
+
+          if item[:needs_confirmation]
+            item[:confirmation] = true
+          end
+        end
+
+        Dir.exist?(sub1).should be true
+        Dir.exist?(sub2).should be true
+        Dir.exist?(sub3).should be true
+      end
+
       it "handles creating directories that do exist" do
         pending "Write me."
       end
