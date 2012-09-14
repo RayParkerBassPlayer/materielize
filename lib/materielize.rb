@@ -29,15 +29,12 @@ module Materielize
     end
 
     def init_cfg_files
-      #@rails_root = File.expand_path(".")
-      #@template_dir = File.expand_path("materiel/default_config_files")
-      #
-      #puts
-      #puts "Copying default configuration files..."
-      #copy @template_dir
-      #puts
-      #puts "Config files copied.  Edit things as you see fit. All original files can be found in 'materiel/default_config_files'"
-      #puts
+      @project_root = Dir.getwd
+      @root = File.expand_path(default_config_dir, root_dir)
+
+      copy(@root) do |item|
+        yield(item)
+      end
     end
 
     private
@@ -51,45 +48,54 @@ module Materielize
     # = Recursive call that winds through the materiel directory and copies default files.  Starting at materiel/default_config_files, the dir structure mimics the app  =
     # ====================================================================================================================================================================
 
-    def copy dir
+    def copy(dir, &block)
       old_dir = Dir.getwd
 
       Dir.chdir(dir)
       cwd = Dir.getwd
 
-      target_dir = @rails_root + cwd.gsub(@template_dir, "")
+      target_dir = @root + cwd.gsub(default_config_dir, "")
 
       for entry in Dir.entries(".") do
         next if entry == "." || entry == ".."
 
         if File.directory?(entry)
-          copy entry
+          if !Dir.exist?(entry)
+            report_back(block, :message => "Creating directory #{entry}.")
+            Dir.mkdir("#@project_root/#{entry}")
+          end
+          copy(entry, &block)
         else
           target_file = "#{target_dir}/#{entry}"
 
-          # TODO: Get rid of the forced deletion of existing files when we're offen rake 0.8.7
-          # In the current test environment, rake 0.8.7 is locked.  Passing the --force option to the thor task
-          # bubbles through to rake and it chokes on the 'unknown' parameter. The only time this task is likely to
-          # be run in the test environment is on the CI server, so just forcing it for now.
-          if File.exists?("#{target_dir}/#{entry}") && (options[:force] || ENV["RAILS_ENV"] == "test")
-            puts "#{target_file} exists, removing due to 'force' option..."
-            FileUtils.rm(target_file)
+          if File.exists?(target_file)
+            options = report_back(block, :message => "#{target_file} exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel: ", :needs_confirmation => true, :confirmation => false)
+
+            if options[:confirmation]
+              report_back(block, :message => "Removing #{target_file}")
+              FileUtils.rm(target_file)
+            end
           end
 
           if !File.exists?(target_file)
-            puts "Creating #{entry}..."
+            report_back(block, :message => "Creating #{entry}...")
+
             begin
-              File.copy "#{cwd}/#{entry}", target_file
+              File.copy("#{cwd}/#{entry}", target_file)
             rescue => e
-              puts "Error copying file: #{e}"
+              report_back(block, :message => "Error copying file: #{e}")
             end
           else
-            puts "#{entry} exists, skipping..."
+            report_back(block, :message => "#{entry} exists, skipping...")
           end
         end
       end
 
       Dir.chdir(old_dir)
+    end
+
+    def report_back(block, options)
+      block.call(options)
     end
   end
 end

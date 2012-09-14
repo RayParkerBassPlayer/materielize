@@ -26,6 +26,7 @@ describe Materielize::ConfigSetup do
 
       @setup.materiel_exists?.should be true
       @setup.default_config_dir_exists?.should be true
+      File.exist?(File.expand_path("README.txt", @setup.root_dir)).should be true
     end
 
     it "handles installation if directories do exist" do
@@ -58,9 +59,33 @@ describe Materielize::ConfigSetup do
   end
 
   context "copying default tree" do
+    before(:each) do
+      @paths_to_nuke = []
+      @setup.install
+    end
+
+    after(:each) do
+      for path in @paths_to_nuke do
+        FileUtils.rm_rf(path)
+      end
+    end
+
     context "and files exist" do
       it "handles creating directories that don't exist" do
-        pending "Write me."
+        dir_name = "sub1"
+        @paths_to_nuke << dir_name
+
+        create_subdirectory(dir_name)
+
+        @setup.init_cfg_files do |item|
+          puts item[:message]
+
+          if item[:needs_confirmation]
+            item[:confirmation] = true
+          end
+        end
+
+        Dir.exist?(dir_name).should be true
       end
 
       it "handles creating directories that do exist" do
