@@ -61,12 +61,17 @@ describe Materielize::ConfigSetup do
   context "copying default tree" do
     before(:each) do
       @paths_to_nuke = []
+      @files_to_nuke = []
       @setup.install
     end
 
     after(:each) do
       for path in @paths_to_nuke do
         FileUtils.rm_rf(path)
+      end
+
+      for file in @files_to_nuke
+        FileUtils.rm(file)
       end
     end
 
@@ -135,11 +140,66 @@ describe Materielize::ConfigSetup do
       end
 
       it "copies files that don't exist already" do
-        pending "Write me."
+        sub_dir = "config"
+        @paths_to_nuke << sub_dir
+
+        src_file_name = "spec/fixtures/empty_file.txt"
+        file1_path = "materiel/default_config_files/#{sub_dir}/config_file.txt"
+
+        file2_path = "materiel/default_config_files/config_file.txt"
+        @files_to_nuke << file2_path
+
+
+        create_subdirectory(sub_dir)
+
+        FileUtils.cp(src_file_name, file1_path)
+        FileUtils.cp(src_file_name, file2_path)
+
+        @setup.init_cfg_files do |item|
+          item[:needs_confirmation].should be false
+        end
+
+        File.exist?(file1_path).should be true
+        File.exist?(file2_path).should be true
       end
 
       it "doesn't overwrite existing files by default" do
-        pending "Write me."
+        sub1 = "config"
+        @paths_to_nuke << sub1
+
+        src_file_name = "spec/fixtures/file_with_content.txt"
+        existing_file_name = "spec/fixtures/empty_file.txt"
+
+        # Creating file path of default_cfg_file here for organization
+        file1_path = "materiel/default_config_files/#{sub1}/config_file.txt"
+        # Place spoof file in its 'production' location to be found by process
+        FileUtils.cp(existing_file_name, "./root.txt")
+        @files_to_nuke << "root.txt"
+
+
+        # Creating file path of default_cfg_file here for organization
+        file2_path = "materiel/default_config_files/root.txt"
+        # Place spoof file in its 'production' location to be found by process
+        FileUtils.cp(existing_file_name, "config/root.txt")
+        @files_to_nuke << file2_path
+
+
+        create_subdirectory(sub1)
+
+        # Now copy over files that are different than what exist.  This will make it easier to make sure that the files
+        # were not overwritten.
+        FileUtils.cp(src_file_name, file1_path)
+        FileUtils.cp(src_file_name, file2_path)
+
+        @setup.init_cfg_files do |item|
+          if item[:needs_confirmation]
+            # Deny the process's request to write over the file.
+            item[:confirmation] = false
+          end
+        end
+
+        FileUtils.identical?(existing_file_name, "root.txt").should be true
+        FileUtils.identical?(existing_file_name, "config/root.txt").should be true
       end
 
       it "overwrites existing files if the user indicates yes" do

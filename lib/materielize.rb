@@ -50,26 +50,39 @@ module Materielize
       for entry in Dir.entries(File.expand_path(current_path, ".")) do
         next if entry == "." || entry == ".."
 
-        # new_dir can also be a file, but naming it optimistically
-        new_dir = File.expand_path(entry, current_path)
+        # The original, be it a directory or a file
+        src = File.expand_path(entry, current_path)
 
-        if File.directory?(new_dir)
+        # The thing that might need to be created, copied, etc.
+        target = File.join(@project_root, *path_parts.reject{|part| [root_dir, default_config_dir].include?(part)}, entry)
+
+        if File.directory?(src)
           # Figure path of an unknown depth of directories and subdirectories, slice off the materiel directory
           # and create the currently found directory under its matching sibling under the project root
-          to_create = File.join(@project_root, *path_parts.reject{|part| [root_dir, default_config_dir].include?(part)}, entry)
-          if !Dir.exist?(to_create)
-            report_back(block, :message => "Creating directory #{to_create}.")
-            Dir.mkdir(to_create)
+          if !Dir.exist?(target)
+            report_back(block, :message => "Creating directory '#{target}'.")
+            Dir.mkdir(target)
           end
 
           # Inter-dimensional travel time...
           copy(path_parts + [entry], &block)
+        else
+          # It's a file
+          if File.exist?(target)
+            options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel:", needs_confirmation: true})
+            puts options.inspect
+          else
+            report_back(block, message: "Creating #{target}.")
+            FileUtils.cp(src, target)
+          end
         end
       end
     end
 
     def report_back(block, options)
-      block.call(options)
+      default_options = {needs_confirmation: false}.merge(options)
+      block.call(default_options)
+      default_options
     end
   end
 end
