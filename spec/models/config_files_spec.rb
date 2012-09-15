@@ -26,22 +26,19 @@ describe Materielize::ConfigSetup do
 
       @setup.materiel_exists?.should be true
       @setup.default_config_dir_exists?.should be true
-      File.exist?(File.expand_path("README.txt", @setup.root_dir)).should be true
     end
 
     it "handles installation if directories do exist" do
-      create_def_cfg_files_dir
       @setup.install
 
       @setup.materiel_exists?.should be true
       @setup.default_config_dir_exists?.should be true
-      File.exist?(File.expand_path("README.txt", @setup.root_dir)).should be true
     end
   end
 
   context "micro-ish helpers" do
     it "recognizes correctly if the materiel directory exists" do
-      create_materiel_dir
+      @setup.install
       @setup.materiel_exists?.should be true
     end
 
@@ -53,7 +50,7 @@ describe Materielize::ConfigSetup do
     end
 
     it "recognizes if the default config files directory does exist" do
-      create_def_cfg_files_dir
+      @setup.install
       @setup.default_config_dir_exists?.should be true
     end
   end
@@ -214,7 +211,50 @@ describe Materielize::ConfigSetup do
       end
 
       it "overwrites existing files if the user indicates yes" do
-        pending "Write me."
+        sub1 = "config"
+        @paths_to_nuke << sub1
+
+        # The file that will try to be copied around from materiel
+        src_file_name = "spec/fixtures/file_with_content.txt"
+
+        # The file that will already be there.
+        existing_file_name = "spec/fixtures/empty_file.txt"
+
+        # Creating file path of default_cfg_file here for organization
+        file1_path = "materiel/default_config_files/#{sub1}/config_file.txt"
+
+        # Place spoof file in its 'production' location to be found by process
+        FileUtils.cp(existing_file_name, "./root.txt")
+        @files_to_nuke << "root.txt"
+
+
+        # Set up the existing subdir to be 'found'
+        Dir.mkdir("config")
+        @paths_to_nuke << "config"
+        file2_path = "materiel/default_config_files/root.txt"
+
+        # Place spoof file in its 'production' location to be found by process
+        FileUtils.cp(existing_file_name, "config/root.txt")
+
+        @setup.install
+        create_subdirectory(sub1)
+
+        # Now copy over files that are different than what exist.  This will make it easier to make sure that the files
+        # were not overwritten.
+        FileUtils.cp(src_file_name, file1_path)
+        FileUtils.cp(src_file_name, file2_path)
+
+        @setup.init_cfg_files do |item|
+          if item[:needs_confirmation]
+            # Deny the process's request to write over the file.
+            item[:confirmation] = true
+          end
+        end
+
+        FileUtils.identical?(src_file_name, "root.txt").should be true
+        FileUtils.identical?(src_file_name, "config/root.txt").should be true
+        FileUtils.identical?(existing_file_name, "root.txt").should be false
+        FileUtils.identical?(existing_file_name, "config/root.txt").should be false
       end
 
       it "does not overwrite existing files if the user indicates no" do
@@ -229,24 +269,9 @@ describe Materielize::ConfigSetup do
 
   def create_subdirectory(subdirectory_name)
     subdir_path = "#@default_config_files_path/#{subdirectory_name}"
-    create_def_cfg_files_dir
 
     if !Dir.exists?(subdir_path)
       Dir.mkdir(subdir_path)
-    end
-  end
-
-  def create_def_cfg_files_dir
-    create_materiel_dir
-
-    if !Dir.exists?(@default_config_files_path)
-      Dir.mkdir(@default_config_files_path)
-    end
-  end
-
-  def create_materiel_dir
-    if !Dir.exists?(@materiel_dir)
-      Dir.mkdir(@materiel_dir)
     end
   end
 end
