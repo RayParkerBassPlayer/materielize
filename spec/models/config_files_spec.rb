@@ -12,12 +12,12 @@ describe Materielize::ConfigSetup do
 
   before(:each) do
     # Start each spec out in fresh territory
-    remove_materiel_dir
+    @setup.uninstall
   end
 
   after(:all) do
     # just like a good neighbor...
-    remove_materiel_dir
+    @setup.uninstall
   end
 
   context "installation" do
@@ -247,12 +247,6 @@ describe Materielize::ConfigSetup do
   def create_materiel_dir
     if !Dir.exists?(@materiel_dir)
       Dir.mkdir(@materiel_dir)
-    end
-  end
-
-  def remove_materiel_dir
-    if Dir.exists?(@materiel_dir)
-      FileUtils.rm_rf(@materiel_dir)
     end
   end
 end
