@@ -143,11 +143,15 @@ describe Materielize::ConfigSetup do
         sub_dir = "config"
         @paths_to_nuke << sub_dir
 
+        # A file to be copied around.
         src_file_name = "spec/fixtures/empty_file.txt"
+
+        # A config file in a subdirectory
         file1_path = "materiel/default_config_files/#{sub_dir}/config_file.txt"
 
+        # A config file in the root directory
         file2_path = "materiel/default_config_files/config_file.txt"
-        @files_to_nuke << file2_path
+        @files_to_nuke << "config_file.txt"
 
 
         create_subdirectory(sub_dir)
@@ -167,22 +171,27 @@ describe Materielize::ConfigSetup do
         sub1 = "config"
         @paths_to_nuke << sub1
 
+        # The file that will try to be copied around from materiel
         src_file_name = "spec/fixtures/file_with_content.txt"
+
+        # The file that will already be there.
         existing_file_name = "spec/fixtures/empty_file.txt"
 
         # Creating file path of default_cfg_file here for organization
         file1_path = "materiel/default_config_files/#{sub1}/config_file.txt"
+
         # Place spoof file in its 'production' location to be found by process
         FileUtils.cp(existing_file_name, "./root.txt")
         @files_to_nuke << "root.txt"
 
 
         # Creating file path of default_cfg_file here for organization
+        Dir.mkdir("config")
+        @paths_to_nuke << "config"
         file2_path = "materiel/default_config_files/root.txt"
+
         # Place spoof file in its 'production' location to be found by process
         FileUtils.cp(existing_file_name, "config/root.txt")
-        @files_to_nuke << file2_path
-
 
         create_subdirectory(sub1)
 
@@ -200,6 +209,8 @@ describe Materielize::ConfigSetup do
 
         FileUtils.identical?(existing_file_name, "root.txt").should be true
         FileUtils.identical?(existing_file_name, "config/root.txt").should be true
+        FileUtils.identical?(src_file_name, "root.txt").should be false
+        FileUtils.identical?(src_file_name, "config/root.txt").should be false
       end
 
       it "overwrites existing files if the user indicates yes" do
