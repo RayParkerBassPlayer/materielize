@@ -84,8 +84,14 @@ module Materielize
         else
           # It's a file
           if File.exist?(target)
-            options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel:", needs_confirmation: true})
-            puts options.inspect
+            options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel:", needs_confirmation: true, confirmation: false})
+            if options[:confirmation]
+              report_back(block, {message: "Replacing #{target}."})
+              FileUtils.rm(target)
+              FileUtils.cp(src, target)
+            else
+              report_back(block, {message: "Skipping #{target}"})
+            end
           else
             report_back(block, message: "Creating #{target}.")
             FileUtils.cp(src, target)

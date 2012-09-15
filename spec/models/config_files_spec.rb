@@ -211,8 +211,10 @@ describe Materielize::ConfigSetup do
       end
 
       it "overwrites existing files if the user indicates yes" do
-        sub1 = "config"
-        @paths_to_nuke << sub1
+        subdirectory = "config"
+        @paths_to_nuke << subdirectory
+
+        config_file_name = "config_file.txt"
 
         # The file that will try to be copied around from materiel
         src_file_name = "spec/fixtures/file_with_content.txt"
@@ -220,41 +222,39 @@ describe Materielize::ConfigSetup do
         # The file that will already be there.
         existing_file_name = "spec/fixtures/empty_file.txt"
 
-        # Creating file path of default_cfg_file here for organization
-        file1_path = "materiel/default_config_files/#{sub1}/config_file.txt"
-
         # Place spoof file in its 'production' location to be found by process
-        FileUtils.cp(existing_file_name, "./root.txt")
-        @files_to_nuke << "root.txt"
+        FileUtils.cp(existing_file_name, "./#{config_file_name}")
+        @files_to_nuke << config_file_name
 
-
-        # Set up the existing subdir to be 'found'
+        # Set up the existing subdir to be 'found' and ad its contents
         Dir.mkdir("config")
         @paths_to_nuke << "config"
-        file2_path = "materiel/default_config_files/root.txt"
+        FileUtils.cp(existing_file_name, "config/#{config_file_name}")
 
-        # Place spoof file in its 'production' location to be found by process
-        FileUtils.cp(existing_file_name, "config/root.txt")
-
+        # Set up materiel and add a subdirectory
         @setup.install
-        create_subdirectory(sub1)
+        create_subdirectory(subdirectory)
 
         # Now copy over files that are different than what exist.  This will make it easier to make sure that the files
         # were not overwritten.
-        FileUtils.cp(src_file_name, file1_path)
-        FileUtils.cp(src_file_name, file2_path)
+        FileUtils.cp(src_file_name, "materiel/default_config_files/#{subdirectory}/#{config_file_name}")
+        FileUtils.cp(src_file_name, "materiel/default_config_files/#{config_file_name}")
 
+        # Run init, answering 'y' to each time it asks of the files are to be overwritten
+        i = 0
         @setup.init_cfg_files do |item|
           if item[:needs_confirmation]
             # Deny the process's request to write over the file.
             item[:confirmation] = true
+            i += 1
           end
         end
+        i.should eq 2 # There should have been two files found and replaced.
 
-        FileUtils.identical?(src_file_name, "root.txt").should be true
-        FileUtils.identical?(src_file_name, "config/root.txt").should be true
-        FileUtils.identical?(existing_file_name, "root.txt").should be false
-        FileUtils.identical?(existing_file_name, "config/root.txt").should be false
+        FileUtils.identical?(src_file_name, config_file_name).should be true
+        FileUtils.identical?(src_file_name, "config/#{config_file_name}").should be true
+        FileUtils.identical?(existing_file_name, config_file_name).should be false
+        FileUtils.identical?(existing_file_name, "config/#{config_file_name}").should be false
       end
 
       it "does not overwrite existing files if the user indicates no" do
