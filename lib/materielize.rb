@@ -19,13 +19,28 @@ module Materielize
 
     # Basic setup of materiel.  Create materiel directory, default config subdirectory, throw around some READMEs, etc.
     def install
-      Dir.mkdir(root_dir) if !materiel_exists?
-      Dir.mkdir(sub_path(default_config_dir)) if !default_config_dir_exists?
+      root_path = File.expand_path(root_dir)
+      if !materiel_exists?
+        yield({message: "Creating directory '#{root_path}'."}) if block_given?
+        Dir.mkdir(root_path)
+      else
+        yield({message: "Directory '#{root_path}' already exists, no need to create."}) if block_given?
+      end
 
-      readme = File.open("#@root_dir/README.TXT", "w")
-      readme << File.read(File.expand_path("lib/root.txt"))
-      readme.flush
-      readme.close
+      default_config_path = File.expand_path(default_config_dir, root_dir)
+
+      if !default_config_dir_exists?
+        yield({message: "Creating directory '#{default_config_path}'."}) if block_given?
+        Dir.mkdir(default_config_path)
+      else
+        yield({message: "Directory '#{default_config_path}' already exists, no need to create."}) if block_given?
+      end
+    end
+
+    def uninstall
+      root_path = File.expand_path(root_dir)
+      yield({message: "Uninstalling: Removing #{root_path}"}) if block_given?
+      FileUtils.rm_rf(root_path)
     end
 
     def init_cfg_files
