@@ -65,6 +65,14 @@ describe Materielize::ConfigSetup do
         @setup.valid_user_response?(confirmation: response).should be true
       end
     end
+
+    it "recognizes bad responses in the form of strings" do
+      @setup.valid_user_response?("H").should be false
+    end
+
+    it "recognizes bad responses in the form of a response hash" do
+      @setup.valid_user_response?(confirmation: "H").should be false
+    end
   end
 
   context "copying default tree" do
