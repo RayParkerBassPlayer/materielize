@@ -354,12 +354,11 @@ describe Materielize::ConfigSetup do
         FileUtils.cp(src_file_name, "materiel/default_config_files/#{subdirectory}/#{config_file_name}")
         FileUtils.cp(src_file_name, "materiel/default_config_files/#{config_file_name}")
 
-        # Run init, answering 'y' to each time it asks of the files are to be overwritten
         i = 0
         @setup.init_cfg_files do |item|
           i += 1
           if item[:needs_confirmation] == true
-            # Deny the process's request to write over the file.
+            # Cancel the whole deal.
             item[:confirmation] = "c"
           end
         end
