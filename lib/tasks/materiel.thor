@@ -2,8 +2,6 @@
 require "materielize"
 require "highline/import"
 
-include HighLine::SystemExtensions
-
 class Materiel < Thor
   desc "install", "Set up the materielize directory if it doesn't already exist"
   def install
