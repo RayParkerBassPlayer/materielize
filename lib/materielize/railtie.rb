@@ -6,7 +6,7 @@ module Materielize
     railtie_name :materielize
 
     rake_tasks do
-      puts "CWD:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #{Dir.cwd}"
+      puts "CWD:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #{Dir.getwd}"
       load "/tasks/materiel.rake"
       #load "lib/tasks/materiel.thor"
     end
