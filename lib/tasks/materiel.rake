@@ -3,7 +3,7 @@ require "materielize"
 require "highline/import"
 
 namespace :materiel do
-  desc "install", "Set up the materielize directory if it doesn't already exist"
+  desc "Set up the materielize directory if it doesn't already exist"
   task :install do
     setup = Materielize::ConfigSetup.new
 
@@ -14,7 +14,7 @@ namespace :materiel do
     puts "Done."
   end
 
-  desc "uninstall", "Remove the materiel directory"
+  desc "Remove the materiel directory"
   task :uninstall do
     setup = Materielize::ConfigSetup.new
 
@@ -25,7 +25,7 @@ namespace :materiel do
     puts "Done."
   end
 
-  desc "init_config_files", "Copy default config files into place."
+  desc "Copy default config files into place."
   task :init_config_files do
     setup = Materielize::ConfigSetup.new
 
