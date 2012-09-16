@@ -1,1 +1,0 @@
-This directory will reflect the root directory of your project.  Things put here will be copied to your project's root directory.  Subdirectories and their content will be copied as subdirectories of your project root, etc.
