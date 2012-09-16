@@ -6,7 +6,7 @@ module Materielize
     railtie_name :materielize
 
     rake_tasks do
-      load "lib/tasks/materiel.rake"
+      load "tasks/materiel.rake"
       #load "lib/tasks/materiel.thor"
     end
   end
