@@ -53,6 +53,18 @@ describe Materielize::ConfigSetup do
       @setup.install
       @setup.default_config_dir_exists?.should be true
     end
+
+    it "recognizes good responses in the form of strings" do
+      for response in @setup.accepted_user_responses
+        @setup.valid_user_response?(response).should be true
+      end
+    end
+
+    it "recognizes good responses in the form of a response hash" do
+      for response in @setup.accepted_user_responses
+        @setup.valid_user_response?(confirmation: response).should be true
+      end
+    end
   end
 
   context "copying default tree" do
@@ -200,7 +212,7 @@ describe Materielize::ConfigSetup do
         @setup.init_cfg_files do |item|
           if item[:needs_confirmation]
             # Deny the process's request to write over the file.
-            item[:confirmation] = false
+            item[:confirmation] = "n"
           end
         end
 
@@ -245,7 +257,7 @@ describe Materielize::ConfigSetup do
         @setup.init_cfg_files do |item|
           if item[:needs_confirmation]
             # Deny the process's request to write over the file.
-            item[:confirmation] = true
+            item[:confirmation] = "y"
             i += 1
           end
         end
@@ -257,11 +269,54 @@ describe Materielize::ConfigSetup do
         FileUtils.identical?(existing_file_name, "config/#{config_file_name}").should be false
       end
 
-      it "does not overwrite existing files if the user indicates no" do
-        pending "Write me."
+      it "overwrites all existing files if the user indicates all" do
+        subdirectory = "config"
+        @paths_to_nuke << subdirectory
+
+        config_file_name = "config_file.txt"
+
+        # The file that will try to be copied around from materiel
+        src_file_name = "spec/fixtures/file_with_content.txt"
+
+        # The file that will already be there.
+        existing_file_name = "spec/fixtures/empty_file.txt"
+
+        # Place spoof file in its 'production' location to be found by process
+        FileUtils.cp(existing_file_name, "./#{config_file_name}")
+        @files_to_nuke << config_file_name
+
+        # Set up the existing subdir to be 'found' and ad its contents
+        Dir.mkdir("config")
+        @paths_to_nuke << "config"
+        FileUtils.cp(existing_file_name, "config/#{config_file_name}")
+
+        # Set up materiel and add a subdirectory
+        @setup.install
+        create_subdirectory(subdirectory)
+
+        # Now copy over files that are different than what exist.  This will make it easier to make sure that the files
+        # were not overwritten.
+        FileUtils.cp(src_file_name, "materiel/default_config_files/#{subdirectory}/#{config_file_name}")
+        FileUtils.cp(src_file_name, "materiel/default_config_files/#{config_file_name}")
+
+        # Run init, answering 'y' to each time it asks of the files are to be overwritten
+        i = 0
+        @setup.init_cfg_files do |item|
+          if item[:needs_confirmation]
+            # Deny the process's request to write over the file.
+            item[:confirmation] = "a"
+            i += 1
+          end
+        end
+        i.should eq 2 # There should have been two files found and replaced.
+
+        FileUtils.identical?(src_file_name, config_file_name).should be true
+        FileUtils.identical?(src_file_name, "config/#{config_file_name}").should be true
+        FileUtils.identical?(existing_file_name, config_file_name).should be false
+        FileUtils.identical?(existing_file_name, "config/#{config_file_name}").should be false
       end
 
-      it "overwrites all existing files if the user indicates all" do
+      it "cancels the entire operation if (c) chosen" do
         pending "Write me."
       end
     end

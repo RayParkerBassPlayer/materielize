@@ -7,6 +7,7 @@ module Materielize
     def initialize
       @root_dir = "materiel"
       @default_config_dir = "default_config_files"
+      @overwrite_all = false
     end
 
     def materiel_exists?
@@ -44,6 +45,7 @@ module Materielize
     end
 
     def init_cfg_files
+      @overwrite_all = false # initialize this do as to not inadvertently cause disaster on a second call or somesuch.
       @project_root = Dir.getwd
       @root = File.expand_path(default_config_dir, root_dir)
 
@@ -52,11 +54,47 @@ module Materielize
       end
     end
 
+    # Valid single-character responses from the user
+    def accepted_user_responses
+      %w[a A n N c C]
+    end
+
+    # Confirm that the user response is valid.  Accepts either a string (char) response or the
+    # the whole response/messaging hash.
+    def valid_user_response?(response)
+      if response.is_a?(String)
+        accepted_user_responses.include?(response)
+      elsif response.is_a?(Hash)
+        accepted_user_responses.include?(response[:confirmation])
+      end
+    end
+
     private
 
     # Create path relative to 'materiel'
     def sub_path(name)
       File.expand_path(name, root_dir)
+    end
+
+    # This only handles a yes, no or all type of response.  If a (c)ancel response
+    # is to be caught, do it before you check with this.
+    def user_confirmed?(response_options)
+      # overwrite all sticks
+      return @overwrite_all if @overwrite_all
+
+      # no response is a false response
+      return false if response_options[:confirmation].nil?
+
+      # make response lower case for simplicity
+      response = response_options[:confirmation].downcase
+
+      # Set overwrite all and return if indicated
+      @overwrite_all = true if response == "a"
+      return @overwrite_all if @overwrite_all
+
+
+      return false if response == "n"
+      true if response == "y"
     end
 
     def copy(path_parts, &block)
@@ -84,15 +122,24 @@ module Materielize
         else
           # It's a file
           if File.exist?(target)
-            options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel:", needs_confirmation: true, confirmation: false})
-            if options[:confirmation]
-              report_back(block, {message: "Replacing #{target}."})
+            options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel:", needs_confirmation: true, confirmation: "n"})
+
+            # Check for a user cancellation before anything is done.
+            if options[:confirmation] == "c" || options[:confirmation] == "C"
+              report_back(block, message: "Operation cancelled.")
+              return
+            end
+
+            # Replace the file if the user confirms or has chosen "all"
+            if user_confirmed?(options)
+              report_back(block, {message: "Replacing #{target} because a force/replace was indicated."})
               FileUtils.rm(target)
               FileUtils.cp(src, target)
             else
               report_back(block, {message: "Skipping #{target}"})
             end
           else
+            # File doesn't exist, so jsut write it.
             report_back(block, message: "Creating #{target}.")
             FileUtils.cp(src, target)
           end
