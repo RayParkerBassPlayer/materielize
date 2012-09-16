@@ -56,13 +56,13 @@ module Materielize
 
     # Valid single-character responses from the user
     def accepted_user_responses
-      %w[a A n N c C]
+      %w[a A n N c C] + [true, false]
     end
 
     # Confirm that the user response is valid.  Accepts either a string (char) response or the
-    # the whole response/messaging hash.
+    # the whole response/messaging hash.  Booleans also accepted.
     def valid_user_response?(response)
-      if response.is_a?(String)
+      if response.is_a?(String) || response.is_a?(TrueClass)|| response.is_a?(FalseClass)
         accepted_user_responses.include?(response)
       elsif response.is_a?(Hash)
         accepted_user_responses.include?(response[:confirmation])
@@ -122,16 +122,22 @@ module Materielize
         else
           # It's a file
           if File.exist?(target)
-            options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel:", needs_confirmation: true, confirmation: "n"})
+            # Initialize, but value won't (shouldn't) be used
+            options = {}
 
-            # Check for a user cancellation before anything is done.
-            if options[:confirmation] == "c" || options[:confirmation] == "C"
-              report_back(block, message: "Operation cancelled.")
-              return
+            # If a forced overwrite of all is indicated, this stuff gets in the way.
+            if !@overwrite_all
+              options = report_back(block, {message: "'#{target}' exists.  Overwrite? (y)es, (n)o, (a)ll or (c)ancel: ", needs_confirmation: true, confirmation: false})
+
+              # Check for a user cancellation before anything is done.
+              if %w[c C].include?(options[:confirmation])
+                report_back(block, message: "Operation cancelled.")
+                return
+              end
             end
 
             # Replace the file if the user confirms or has chosen "all"
-            if user_confirmed?(options)
+            if @overwrite_all || user_confirmed?(options)
               report_back(block, {message: "Replacing #{target} because a force/replace was indicated."})
               FileUtils.rm(target)
               FileUtils.cp(src, target)
@@ -148,7 +154,7 @@ module Materielize
     end
 
     def report_back(block, options)
-      default_options = {needs_confirmation: false}.merge(options)
+      default_options = {needs_confirmation: false, confirmation: false}.merge(options)
       block.call(default_options)
       default_options
     end
