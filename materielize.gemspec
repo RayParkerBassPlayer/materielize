@@ -4,9 +4,9 @@ require File.expand_path('../lib/materielize/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Ray Parker"]
   gem.email         = ["RayParkerBassPlayer@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{A helper for default config files.}
+  gem.summary       = %q{Helps with the stowage and installation of default config files -- helpful for dev and CI environments.}
+  gem.homepage      = "http://github.com/RayParkerBassPlayer/materielize"
 
   gem.add_development_dependency "rspec"
   gem.add_development_dependency "rake"
