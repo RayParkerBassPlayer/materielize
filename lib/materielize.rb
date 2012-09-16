@@ -1,4 +1,5 @@
 require "materielize/version"
+require "materielize/railtie" if defined?(Rails)
 
 module Materielize
   class ConfigSetup
