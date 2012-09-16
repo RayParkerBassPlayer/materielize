@@ -1,5 +1,8 @@
 #noinspection RubyResolve
 require "materielize"
+require "highline/import"
+
+include HighLine::SystemExtensions
 
 class Materiel < Thor
   desc "install", "Set up the materielize directory if it doesn't already exist"
@@ -19,6 +22,22 @@ class Materiel < Thor
 
     setup.uninstall do |item|
       puts item[:message]
+    end
+
+    puts "Done."
+  end
+
+  desc "init_config_files", "Copy default config files into place."
+  def init_config_files
+    setup = Materielize::ConfigSetup.new
+
+    setup.init_cfg_files do |item|
+      if item[:needs_confirmation]
+        item[:confirmation] = ask(item[:message])
+        puts
+      else
+        puts item[:message]
+      end
     end
 
     puts "Done."
