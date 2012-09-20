@@ -45,13 +45,17 @@ module Materielize
       FileUtils.rm_rf(root_path)
     end
 
-    def init_cfg_files
-      @overwrite_all = false # initialize this do as to not inadvertently cause disaster on a second call or somesuch.
+    def init_cfg_files(options = {})
+      @overwrite_all = {force_all: false}.merge(options)[:force_all] # initialize if not indicated so as to not inadvertently cause disaster on a second call or somesuch.
       @project_root = Dir.getwd
       @root = File.expand_path(default_config_dir, root_dir)
 
-      copy([root_dir, default_config_dir]) do |item|
-        yield(item)
+      begin
+        copy([root_dir, default_config_dir]) do |item|
+          yield(item)
+        end
+      rescue Interrupt => e
+        puts e
       end
     end
 
@@ -132,8 +136,9 @@ module Materielize
 
               # Check for a user cancellation before anything is done.
               if %w[c C].include?(options[:confirmation])
-                report_back(block, message: "Operation cancelled.")
-                return
+                message = "User cancelled operation."
+                report_back(block, message: message)
+                raise Interrupt.new(message)
               end
             end
 
