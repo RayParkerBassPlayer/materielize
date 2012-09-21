@@ -27,6 +27,9 @@ Creates the materiel directory and the default_config_files subdirectory.  The d
     $ rake materiel:init_config_files
 This copies files to their mirrored locations.  If files are already present you will be prompted if you want to overwrite them.
 
+    $ rake materiel:init_config_files force
+This copies files to their mirrored locations.  If files are already present they will be overwritten.
+
     $ rake materiel:uninstall
 This will remove the materiel directory, recursively.
 
