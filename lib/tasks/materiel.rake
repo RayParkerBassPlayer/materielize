@@ -27,9 +27,11 @@ namespace :materiel do
 
   desc "Copy default config files into place."
   task :init_config_files do
+    force = parse_args(ARGV)
+
     setup = Materielize::ConfigSetup.new
 
-    setup.init_cfg_files do |item|
+    setup.init_cfg_files(force_all: force) do |item|
       if item[:needs_confirmation]
         item[:confirmation] = ask(item[:message])
         puts
@@ -39,5 +41,23 @@ namespace :materiel do
     end
 
     puts "Done."
+  end
+
+  def parse_args(args)
+    if args.count > 2
+      puts "'force' is the only option"
+      puts "EX: rake materiel:init_config_files force"
+      raise ArgumentError
+    end
+
+    # No args given
+    return false if args.count == 1
+
+    # Swallow the arg so that it's not considered a real rake task by rake
+    option = args[1]
+    task option.to_sym do ; end
+
+    # Return true if force given as an arg.
+    return args[1].downcase == "force"
   end
 end

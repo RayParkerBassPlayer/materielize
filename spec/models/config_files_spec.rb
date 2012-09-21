@@ -198,17 +198,17 @@ describe Materielize::ConfigSetup do
         file1_path = "materiel/default_config_files/#{sub1}/config_file.txt"
 
         # Place spoof file in its 'production' location to be found by process
-        FileUtils.cp(existing_file_name, "./root.txt")
-        @files_to_nuke << "root.txt"
+        FileUtils.cp(existing_file_name, "./config_file.txt")
+        @files_to_nuke << "config_file.txt"
 
 
         # Creating file path of default_cfg_file here for organization
         Dir.mkdir("config")
         @paths_to_nuke << "config"
-        file2_path = "materiel/default_config_files/root.txt"
+        file2_path = "materiel/default_config_files/config_file.txt"
 
         # Place spoof file in its 'production' location to be found by process
-        FileUtils.cp(existing_file_name, "config/root.txt")
+        FileUtils.cp(existing_file_name, "config/config_file.txt")
 
         create_subdirectory(sub1)
 
@@ -217,17 +217,20 @@ describe Materielize::ConfigSetup do
         FileUtils.cp(src_file_name, file1_path)
         FileUtils.cp(src_file_name, file2_path)
 
+        prompts = 0
         @setup.init_cfg_files do |item|
           if item[:needs_confirmation] == true
             # Deny the process's request to write over the file.
             item[:confirmation] = "n"
+            prompts += 1
           end
         end
+        prompts.should eq 2
 
-        FileUtils.identical?(existing_file_name, "root.txt").should be true
-        FileUtils.identical?(existing_file_name, "config/root.txt").should be true
-        FileUtils.identical?(src_file_name, "root.txt").should be false
-        FileUtils.identical?(src_file_name, "config/root.txt").should be false
+        FileUtils.identical?(existing_file_name, "config_file.txt").should be true
+        FileUtils.identical?(existing_file_name, "config/config_file.txt").should be true
+        FileUtils.identical?(src_file_name, "config_file.txt").should be false
+        FileUtils.identical?(src_file_name, "config/config_file.txt").should be false
       end
 
       it "overwrites existing files if the user indicates yes" do
@@ -356,10 +359,10 @@ describe Materielize::ConfigSetup do
 
         i = 0
         @setup.init_cfg_files do |item|
-          i += 1
           if item[:needs_confirmation] == true
             # Cancel the whole deal.
             item[:confirmation] = "c"
+            i += 1
           end
         end
         i.should eq 1 # There should have been one prompt
