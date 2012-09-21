@@ -55,7 +55,7 @@ module Materielize
           yield(item)
         end
       rescue Interrupt => e
-        yield {message: e.message, needs_confirmation: false}
+        yield({message: e.message, needs_confirmation: false})
       end
     end
 
